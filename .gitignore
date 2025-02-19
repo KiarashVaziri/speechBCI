@@ -46,3 +46,7 @@ Archive/*
 
 # Matlab
 *.asv
+
+# Data
+tuningTasks/
+competitionData/

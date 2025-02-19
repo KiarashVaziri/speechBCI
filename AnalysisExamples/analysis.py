@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 from omegaconf import OmegaConf
-from neuralDecoder.neuralSequenceDecoder import NeuralSequenceDecoder
 import os
 
 @njit
