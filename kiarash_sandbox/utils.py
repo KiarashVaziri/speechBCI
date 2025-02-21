@@ -84,8 +84,11 @@ def convert_py_conf_file_to_text(conf_file_name):
     return lines
 
 
-def prepare_data():
-    fiftyWordData = scipy.io.loadmat('../tuningTasks/t12.2022.05.03_fiftyWordSet.mat')
+def prepare_data(type='words'):
+    if type == 'phonemes':
+        data = scipy.io.loadmat('tuningTasks/t12.2022.04.21.mat')
+    elif type == 'words':
+        data = scipy.io.loadmat('tuningTasks/t12.2022.05.03_fiftyWordSet.mat')
 
     # mean-subtract within block
     def meanSubtract(dat, brainArea='6v'):
@@ -102,18 +105,18 @@ def prepare_data():
         return dat
 
     # mean subtraction (de-mean)
-    fiftyWordData_6v = meanSubtract(fiftyWordData)
+    data_6v = meanSubtract(data)
 
     # Sample piece: [sequence_length, channel_index]
-    # NOTE: dat['feat'] are the continuous features
-    print(f"Feature length: {len(fiftyWordData_6v['feat'])}")
+    # NOTE: data_6v['feat'] are the continuous features
+    # print(f"Feature length: {len(data_6v['feat'])}")
+
+    feats = data_6v['feat'][:, 0:128]
+    cueList = data_6v['cueList']
+    trialCues = data_6v['trialCues']
+    goTrialEpochs = data_6v['goTrialEpochs']
+
     max_length = max(end - start for start, end in goTrialEpochs)
-
-    feats = fiftyWordData_6v['feat'][:, 0:128]
-    cueList = fiftyWordData_6v['cueList']
-    trialCues = fiftyWordData_6v['trialCues']
-    goTrialEpochs = fiftyWordData_6v['goTrialEpochs']
-
     # Extract trial data based on goTrialEpochs
     trial_data = [feats[start:end] for start, end in goTrialEpochs]
     # Convert list to NumPy array (padding might be needed if trial lengths vary)
@@ -133,7 +136,7 @@ def prepare_data():
     # CrossEntropyLoss requires labels starting from 0
     labels = labels - 1
 
-    X_train, X_test, y_train, y_test = train_test_split(padded_trials_gs, labels, test_size=0.2)
-    X_validation, X_test, y_validation, y_test = train_test_split(X_test, y_test, test_size=0.5)
+    X_train, X_test, y_train, y_test = train_test_split(padded_trials_gs, labels, test_size=0.2, shuffle=True, random_state=30)
+    X_validation, X_test, y_validation, y_test = train_test_split(X_test, y_test, test_size=0.5, shuffle=True, random_state=30)
 
     return X_train, X_validation, X_test, y_train, y_validation, y_test

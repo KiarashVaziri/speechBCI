@@ -1,0 +1,74 @@
+The configuration settings in the file kiarash_sandbox/confs/conf_train_ldmcpc_model.py:
+
+import argparse
+max_epochs = 1000
+patience = 100
+dropout = 0.1
+batch_size = 16
+learning_rate = 2e-4
+num_frames_encoding = 100
+future_predicted_timesteps = [1, 2, 3, 4]
+train_model = 0
+test_model = 1
+rand_init = 1
+load_model = 1
+save_best_model = 1
+print_conf_contents = 1
+encoder_name = 'CPC_encoder'
+autoregressive_model_name = 'CPC_autoregressive_model'
+postnet_name = 'CPC_postnet'
+rnn_models_used_in_ar_model = 0
+dataset_name = 'CPCDataset' #*
+loss_name = 'CPC_nce_loss' # 'CPC_loss_no_classes' | 'CPC_mse_loss'
+loss_flag = 'mse' if loss_name == 'CPC_mse_loss' else 'nce'
+loss_params = {'future_predicted_timesteps': future_predicted_timesteps}
+optimization_algorithm = 'Adam'
+optimization_algorithm_params = {'lr': learning_rate}
+use_lr_scheduler = 0
+lr_scheduler = 'ReduceLROnPlateau'
+lr_scheduler_params = {'mode': 'min',
+                       'factor': 0.5,
+                       'patience': 30}
+encoder_params = {'dropout': dropout}
+ar_model_params = {'type': 'gru'}
+w_params = {'future_predicted_timesteps': future_predicted_timesteps,
+            'detach':False}
+w_use_ldm_params = 0
+encoder_best_model_name = f"kiarash_sandbox/models/CPC_Encoder_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
+ar_best_model_name = f"kiarash_sandbox/models/CPC_AR_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
+w_best_model_name = f"kiarash_sandbox/models/W_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
+params_train = {'batch_size': batch_size,
+                'shuffle': True,
+                'drop_last': True,
+                'num_workers': 0,
+                'pin_memory': False}
+params_test = {'batch_size': batch_size,
+               'shuffle': False,
+               'drop_last': True}
+name_of_log_textfile = f"trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"
+
+########################################################################################
+
+
+
+Process on cuda
+
+Number of parameters:
+Encoder #params:    49536 (%23.1)
+AR #params:         99072 (%46.3)
+W #params:          65536 (%30.6)
+Total #params:  214144
+
+Loading model from file...
+Loading model kiarash_sandbox/models/CPC_Encoder_best_model_gru_ldmfcst0.pt
+Loading model kiarash_sandbox/models/CPC_AR_best_model_gru_ldmfcst0.pt
+Loading model kiarash_sandbox/models/W_best_model_gru_ldmfcst0.pt
+Done!
+
+
+
+Starting testing... => Testing loss: 266.1526
+
+Word classification
+train acc: 15.0735% 
+testing acc : 5.2083%

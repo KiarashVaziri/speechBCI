@@ -23,6 +23,7 @@ from utils import convert_py_conf_file_to_text
 # from utils import visualize_tsne
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 
 # Read the configuration file
@@ -36,7 +37,7 @@ else:
         # import conf_train_cpc_model_orig_implementation as conf
         # conf_file_name = 'conf_train_cpc_model_orig_implementation.py'
         from confs import conf_train_ldmcpc_model as conf
-        conf_file_name = 'confs/conf_train_ldmcpc_model.py'
+        conf_file_name = 'kiarash_sandbox/confs/conf_train_ldmcpc_model.py'
     except ModuleNotFoundError:
         sys.exit('''Usage: \n1) python train_cpc_model.py \nOR \n2) python train_cpc_model.py <configuration_file>\n\n
         By using the first option, you need to have a configuration file named "conf_train_cpc_model.py" in the same directory 
@@ -44,9 +45,9 @@ else:
 
 
 # Import our models
-from kiarash_sandbox.cpc_data_loader import CPCDataset
 from torch.utils.data import DataLoader, Subset
-from kiarash_sandbox.encoding_models.cpc_model import CPC_encoder_mlp, CPC_autoregressive_model, CPC_postnet
+from encoding_models.cpc_model import CPC_encoder_mlp, CPC_autoregressive_model, CPC_postnet
+from cpc_data_loader import CPCDataset
 from pytorch_utils.loss.contrastive_loss import CPCLoss
 
 # Import our optimization algorithm
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     
     
     # Initialize the data loaders
-    from kiarash_sandbox.utils import prepare_data
+    from utils import prepare_data
     X_train, X_validation, X_test, y_train, y_validation, y_test = prepare_data()
     training_set = CPCDataset(x=X_train, y=y_train)
     train_data_loader = DataLoader(training_set, **conf.params_train)
@@ -202,7 +203,7 @@ if __name__ == '__main__':
                 hidden = None
             
             # Open the log file for writing
-            log_file = open(f"logs/epochlogs/epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_rnd{conf.random_seed}_{conf.loss_flag}.txt", "w")
+            log_file = open(f"epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_{conf.loss_flag}.txt", "w")
 
             # Store the features/embeddings
             Z_feats_training = []
@@ -258,7 +259,7 @@ if __name__ == '__main__':
                         if conf.w_params['detach']:
                             loss = loss_function(Z_future_timesteps.detach(), predicted_future_Z)
                         else:
-                            loss = loss_function(Z_future_timesteps.detach(), predicted_future_Z)
+                            loss = loss_function(Z_future_timesteps, predicted_future_Z)
                         
                         # Add the loss to the total loss of the batch
                         loss_batch += loss
@@ -276,6 +277,7 @@ if __name__ == '__main__':
                     # Save the features
                     Z_feats_training.append(Z.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
                     C_feats_training.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                    # C_feats_training.append(C[:,-1, :])  #[batch_size, num_frames_encoding, num_features]
                     train_labels.append(batch_labels)    
                 
             Z_feats_training = torch.cat(Z_feats_training).detach().cpu().numpy()
@@ -324,6 +326,7 @@ if __name__ == '__main__':
                     # Save the features
                     Z_feats_val.append(Z.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
                     C_feats_val.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                    # C_feats_val.append(C[:, -1])  #[batch_size, num_frames_encoding, num_features]
                     val_labels.append(batch_labels)    
             
             log_file.close()
@@ -356,6 +359,7 @@ if __name__ == '__main__':
             # Monitor classification accuracy on validation set
             # Classify speakers
             clf = LogisticRegression(penalty='l2')
+            # clf = SVC(C=0.1)
             clf.fit(C_feats_training, train_labels)
             train_labels_predicted = clf.predict(C_feats_training)
             val_labels_predicted = clf.predict(C_feats_val)
@@ -423,7 +427,7 @@ if __name__ == '__main__':
 
     # Adjust layout and save the figure
     plt.tight_layout()
-    plt.savefig(f"logs/epochs_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_dtch{conf.w_params['detach']}_{conf.num_speakers}.png")
+    plt.savefig(f"epochs_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}.png")
 
     # Test the model
     if conf.test_model:
@@ -442,7 +446,7 @@ if __name__ == '__main__':
                 W.load_state_dict(best_model_w)
         # Randomly initialize the model components
         else:
-            Encoder = CPC_encoder(**conf.encoder_params).to(device)
+            Encoder = CPC_encoder_mlp(**conf.encoder_params).to(device)
             AR_model = CPC_autoregressive_model(**conf.ar_model_params).to(device)
             W = CPC_postnet(**conf.w_params).to(device)
                 
@@ -516,8 +520,9 @@ if __name__ == '__main__':
             Ctest_embeddings = torch.cat(Ctest_embeddings).cpu().numpy()
             test_labels = torch.cat(test_labels).cpu().numpy()
 
-            # Classify speakers
-            clf = LogisticRegression(penalty='l2')
+            # # Classify speakers
+            clf = LogisticRegression(penalty='l2', solver='lbfgs', max_iter=500)
+            # clf = SVC(C=0.1, kernel='linear')
             clf.fit(Ctrain_embeddings, train_labels)
             train_labels_predicted = clf.predict(Ctrain_embeddings)
             test_labels_predicted = clf.predict(Ctest_embeddings)
@@ -526,10 +531,10 @@ if __name__ == '__main__':
             metrics['test_acc'] = test_acc
             
             with open(conf.name_of_log_textfile, 'a') as f:
-                f.write(f'Speaker classification results [seed: {conf.random_seed}]\n')
+                f.write(f'Word classification\n')
                 f.write(f'train acc: {100*train_acc:3.4f}% \ntesting acc : {100*test_acc:3.4f}%\n')
 
-            print(f'Speaker classification results [seed: {conf.random_seed}]')
+            print(f'Word classification')
             print(f'train acc: {100*train_acc:3.3f}% \ntesting acc : {100*test_acc:3.3f}% \n')
 
             # fig, ax1, ax2 = visualize_tsne(x= Ctest_embeddings, y_label=test_labels, perplexity=10, title_str=f'speaker classification: {test_acc:.4f}\n')
@@ -538,7 +543,7 @@ if __name__ == '__main__':
             # Plot losses (training and validation)
 
     # Define the file path for saving the metrics
-    metrics_file = os.path.join('metrics', f"metrics_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_{conf.future_predicted_timesteps}_rnd{conf.random_seed}_{conf.loss_flag}_dtch{conf.w_params['detach']}_lnrw")
+    metrics_file = os.path.join('kiarash_sandbox/metrics', f"metrics_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_{conf.future_predicted_timesteps}_{conf.loss_flag}")
 
     # Dump the results into the metrics folder
     with open(metrics_file, 'wb') as pickle_file:

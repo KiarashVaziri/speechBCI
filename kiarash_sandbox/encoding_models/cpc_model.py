@@ -11,7 +11,7 @@ import numpy as np
 import sys
 import torch
 from torch import stack
-from torch.nn import Module, Linear, ReLU, Conv1d, BatchNorm1d, Dropout, GRU, ModuleList, ELU, Identity, Sequential
+from torch.nn import Module, Linear, ReLU, Conv1d, BatchNorm1d, LayerNorm, Dropout, GRU, ModuleList, ELU, Identity, Sequential
 from encoding_models.LDM import LDM, init_ldm_parameters
 
 
@@ -105,22 +105,24 @@ class CPC_encoder_mlp(Module):
     """
     
     def __init__(self,
-                 linear_1_input_dim = 40,
-                 linear_1_output_dim = 512,
-                 num_norm_features_1 = 512,
-                 linear_2_input_dim = 512,
-                 linear_2_output_dim = 512,
-                 num_norm_features_2 = 512,
-                 linear_3_input_dim = 512,
-                 linear_3_output_dim = 256,
-                 num_norm_features_3 = 256,
-                 normalization_type = 'batchnorm',
+                 linear_1_input_dim = 128,
+                 linear_1_output_dim = 128,
+                 num_norm_features_1 = 128,
+                 linear_2_input_dim = 128,
+                 linear_2_output_dim = 128,
+                 num_norm_features_2 = 128,
+                 linear_3_input_dim = 128,
+                 linear_3_output_dim = 128,
+                 num_norm_features_3 = 128,
+                 normalization_type = None,
                  dropout = 0.2):
 
         super().__init__()
         
         if normalization_type == 'batchnorm':
             normalization_layer = BatchNorm1d
+        elif normalization_type == 'layernorm':
+            normalization_layer = LayerNorm
         elif normalization_type == None:
             normalization_layer = Identity
         else:
@@ -143,7 +145,6 @@ class CPC_encoder_mlp(Module):
 
 
     def forward(self, X):
-        
         # X is now of size [batch_size, num_frames_input, num_features]
         X_output = []
         
@@ -169,8 +170,8 @@ class CPC_autoregressive_model(Module):
     
     """
     
-    def __init__(self, encoding_dim = 256,
-                 output_dim = 256,
+    def __init__(self, encoding_dim = 128,
+                 output_dim = 128,
                  num_layers = 1,
                  type='gru',
                  ldm_kernel_initializer = 'default',
@@ -256,7 +257,7 @@ class CPC_postnet(Module):
     Alternatively, as mentioned by the authors, non-linear networks or recurrent neural networks could be used.
     """
     
-    def __init__(self, encoding_dim=256, ar_model_output_dim=256, future_predicted_timesteps=12, 
+    def __init__(self, encoding_dim=128, ar_model_output_dim=128, future_predicted_timesteps=12, 
                  detach=False, use_mlp=False):
         super().__init__()
 

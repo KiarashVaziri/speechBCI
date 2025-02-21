@@ -10,12 +10,11 @@ The configuration file for train_cpc_model.py using the original CPC implementat
 import argparse
 
 # The hyperparameters for our training and testing process
-max_epochs = 10
+max_epochs = 1000
 patience = 100
-dropout = 0.0
-batch_size = 8
-learning_rate = 2e-3
-num_speakers = 10
+dropout = 0.1
+batch_size = 16
+learning_rate = 2e-4
 
 # The number of frames in the encoded samples z_t
 num_frames_encoding = 100
@@ -24,17 +23,16 @@ num_frames_encoding = 100
 # giving a list of numbers will result in discrete timesteps defined by the list. Giving one number
 # inside a list (e.g. [12]) will make the model predict only one future timestep.
 # NOTE: The first future timestep is 1, not 0
-future_predicted_timesteps = [5, 6, 7, 8]
+future_predicted_timesteps = [1, 2, 3, 4]
 
 # Flags for training and testing a CPC model
-train_model = 1
+train_model = 0
 test_model = 1
+rand_init = 1
 
 # Flag for loading the weights for our model, i.e. flag for continuing a previous training process
-load_model = 0
+load_model = 1
 
-# Randomly initialize the model component for test 
-rand_init = 0
 
 # Flag for saving the best model (according to validation loss) after each training epoch where the
 # validation loss is lower than before
@@ -85,19 +83,13 @@ lr_scheduler_params = {'mode': 'min',
 encoder_params = {'dropout': dropout}
 ar_model_params = {'type': 'gru'}
 w_params = {'future_predicted_timesteps': future_predicted_timesteps,
-            'detach':True}
+            'detach':False}
 w_use_ldm_params = 0
 
 # The names of the best models (according to validation loss) for loading/saving model weights
-encoder_best_model_name = f"models/{num_speakers}/CPC_Encoder_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
-ar_best_model_name = f"models/{num_speakers}/CPC_AR_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
-w_best_model_name = f"models/{num_speakers}/W_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
-
-# The hyperparameters for our data loaders
-random_seed = 21
-params_train_dataset = {'random_seed': random_seed, 'num_speakers': num_speakers}
-params_validation_dataset = {'random_seed': random_seed, 'num_speakers': num_speakers}
-params_test_dataset = {'random_seed': random_seed, 'num_speakers': num_speakers}
+encoder_best_model_name = f"kiarash_sandbox/models/CPC_Encoder_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
+ar_best_model_name = f"kiarash_sandbox/models/CPC_AR_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
+w_best_model_name = f"kiarash_sandbox/models/W_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
 
 # The hyperparameters for training and validation (arguments for torch.utils.data.DataLoader object)
 params_train = {'batch_size': batch_size,
@@ -112,7 +104,4 @@ params_test = {'batch_size': batch_size,
                'drop_last': True}
 
 # The name of the text file into which we log the output of the training process
-name_of_log_textfile = f"logs/trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}_dtch{w_params['detach']}_rndinit{rand_init}.txt"
-###########
-# Additions
-train_size = 0.8
+name_of_log_textfile = f"trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"

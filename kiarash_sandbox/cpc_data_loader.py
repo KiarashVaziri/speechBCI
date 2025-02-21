@@ -15,8 +15,6 @@ import sys
 import random
 import librosa
 import torchaudio
-
-
      
 
 class CPC_raw_audio_dataset(Dataset):
@@ -208,6 +206,7 @@ class CPC_raw_audio_dataset_with_labels(Dataset):
         
         return from_numpy(self.feats[index][part_index:(part_index + self.audio_window_length)]), self.labels[index]
 
+
 class CPCDataset(Dataset):
     '''
     Dataset class for CPC
@@ -231,7 +230,6 @@ class CPCDataset(Dataset):
     
     def __getitem__(self, index):
         return self.x[index], self.y[index]
-
 
 
 class CPC_logmel_dataset(Dataset):
