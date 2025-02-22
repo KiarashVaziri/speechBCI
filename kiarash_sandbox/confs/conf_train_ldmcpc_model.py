@@ -26,12 +26,12 @@ num_frames_encoding = 100
 future_predicted_timesteps = [1, 2, 3, 4]
 
 # Flags for training and testing a CPC model
-train_model = 0
+train_model = 1
 test_model = 1
-rand_init = 1
+rand_init = 0
 
 # Flag for loading the weights for our model, i.e. flag for continuing a previous training process
-load_model = 1
+load_model = 0
 
 
 # Flag for saving the best model (according to validation loss) after each training epoch where the
@@ -104,4 +104,4 @@ params_test = {'batch_size': batch_size,
                'drop_last': True}
 
 # The name of the text file into which we log the output of the training process
-name_of_log_textfile = f"trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"
+name_of_log_textfile = f"kiarash_sandbox/logs/trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"

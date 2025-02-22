@@ -8,10 +8,10 @@ batch_size = 16
 learning_rate = 2e-4
 num_frames_encoding = 100
 future_predicted_timesteps = [1, 2, 3, 4]
-train_model = 0
+train_model = 1
 test_model = 1
-rand_init = 1
-load_model = 1
+rand_init = 0
+load_model = 0
 save_best_model = 1
 print_conf_contents = 1
 encoder_name = 'CPC_encoder'
@@ -45,7 +45,7 @@ params_train = {'batch_size': batch_size,
 params_test = {'batch_size': batch_size,
                'shuffle': False,
                'drop_last': True}
-name_of_log_textfile = f"trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"
+name_of_log_textfile = f"kiarash_sandbox/logs/trainlog_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.txt"
 
 ########################################################################################
 
@@ -59,16 +59,10 @@ AR #params:         99072 (%46.3)
 W #params:          65536 (%30.6)
 Total #params:  214144
 
-Loading model from file...
-Loading model kiarash_sandbox/models/CPC_Encoder_best_model_gru_ldmfcst0.pt
-Loading model kiarash_sandbox/models/CPC_AR_best_model_gru_ldmfcst0.pt
-Loading model kiarash_sandbox/models/W_best_model_gru_ldmfcst0.pt
-Done!
-
-
-
-Starting testing... => Testing loss: 266.1526
-
-Word classification
-train acc: 15.0735% 
-testing acc : 5.2083%
+Starting training...
+Epoch: 0001 | Mean training loss: 252.6426 | Mean validation loss: 228.3923 (lowest: 228.3923) | training acc: 19.7304% | validation acc : 5.2083% | Duration: 11.2973 seconds
+Epoch: 0002 | Mean training loss: 198.9529 | Mean validation loss: 154.2001 (lowest: 154.2001) | training acc: 31.1275% | validation acc : 16.6667% | Duration:  9.1451 seconds
+Epoch: 0003 | Mean training loss: 131.1253 | Mean validation loss: 105.2641 (lowest: 105.2641) | training acc: 44.3627% | validation acc : 22.9167% | Duration:  9.0709 seconds
+Epoch: 0004 | Mean training loss: 84.6535 | Mean validation loss: 63.7406 (lowest: 63.7406) | training acc: 55.1471% | validation acc : 31.2500% | Duration:  8.9858 seconds
+Epoch: 0005 | Mean training loss: 55.5657 | Mean validation loss: 40.9016 (lowest: 40.9016) | training acc: 61.2745% | validation acc : 40.6250% | Duration:  9.1805 seconds
+Epoch: 0006 | Mean training loss: 40.8553 | Mean validation loss: 30.4655 (lowest: 30.4655) | training acc: 63.8480% | validation acc : 43.7500% | Duration:  8.9938 seconds

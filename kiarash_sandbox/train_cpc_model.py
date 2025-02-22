@@ -203,7 +203,7 @@ if __name__ == '__main__':
                 hidden = None
             
             # Open the log file for writing
-            log_file = open(f"epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_{conf.loss_flag}.txt", "w")
+            log_file = open(f"kiarash_sandbox/logs/epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_{conf.loss_flag}.txt", "w")
 
             # Store the features/embeddings
             Z_feats_training = []
@@ -463,7 +463,7 @@ if __name__ == '__main__':
             Ctrain_embeddings = []
             train_labels = []
             
-            log_file = open('training_log.txt', "w")
+            log_file = open('kiarash_sandbox/logs/fx_log.txt', "w")
             for train_data in tqdm(train_data_loader, desc=f"Feature extraction - training set: ", unit="batch", file=log_file):
                 loss_batch = 0.0
                 X_input, batch_labels = train_data
@@ -474,8 +474,9 @@ if __name__ == '__main__':
                 else:
                     C = AR_model(Z)
                 
-                Ztrain_embeddings.append(Z.mean(axis=2))  #[batch_size, num_features, num_frames_encoding]
-                Ctrain_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                Ztrain_embeddings.append(Z.mean(axis=2))    #[batch_size, num_features, num_frames_encoding]
+                # Ctrain_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                Ctrain_embeddings.append(C[:, -1])          # select the last hidden vector
                 train_labels.append(batch_labels)    
             
             Ztrain_embeddings = torch.cat(Ztrain_embeddings).cpu().numpy()
@@ -497,9 +498,11 @@ if __name__ == '__main__':
                     C = AR_model(Z)
                 
                 Ztest_embeddings.append(Z.mean(axis=2))  #[batch_size, num_features, num_frames_encoding]
-                Ctest_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                # Ctest_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                Ctest_embeddings.append(C[:, -1])  #[batch_size, num_frames_encoding, num_features]
                 test_labels.append(batch_labels)    
 
+                # Compute test loss
                 for t in timesteps:
                     Z_future_timesteps = Z[:,(t + 1):(t + max_future_timestep + 1),:].permute(1, 0, 2)
                     c_t = C[:, t, :]
@@ -521,8 +524,8 @@ if __name__ == '__main__':
             test_labels = torch.cat(test_labels).cpu().numpy()
 
             # # Classify speakers
-            clf = LogisticRegression(penalty='l2', solver='lbfgs', max_iter=500)
-            # clf = SVC(C=0.1, kernel='linear')
+            # clf = LogisticRegression(penalty='l2', solver='lbfgs', max_iter=500)
+            clf = SVC(C=1, kernel='linear')
             clf.fit(Ctrain_embeddings, train_labels)
             train_labels_predicted = clf.predict(Ctrain_embeddings)
             test_labels_predicted = clf.predict(Ctest_embeddings)
