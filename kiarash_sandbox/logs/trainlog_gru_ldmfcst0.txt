@@ -8,7 +8,7 @@ batch_size = 16
 learning_rate = 2e-4
 num_frames_encoding = 100
 future_predicted_timesteps = [1, 2, 3, 4]
-train_model = 1
+train_model = 0
 test_model = 1
 rand_init = 0
 load_model = 0
@@ -29,10 +29,10 @@ lr_scheduler = 'ReduceLROnPlateau'
 lr_scheduler_params = {'mode': 'min',
                        'factor': 0.5,
                        'patience': 30}
-encoder_params = {'dropout': dropout}
+encoder_params = {'dropout': dropout, 'normalization_type': 'layernorm'}
 ar_model_params = {'type': 'gru'}
 w_params = {'future_predicted_timesteps': future_predicted_timesteps,
-            'detach':False}
+            'detach':True}
 w_use_ldm_params = 0
 encoder_best_model_name = f"kiarash_sandbox/models/CPC_Encoder_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
 ar_best_model_name = f"kiarash_sandbox/models/CPC_AR_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
@@ -54,15 +54,63 @@ name_of_log_textfile = f"kiarash_sandbox/logs/trainlog_{ar_model_params['type']}
 Process on cuda
 
 Number of parameters:
-Encoder #params:    49536 (%23.1)
-AR #params:         99072 (%46.3)
-W #params:          65536 (%30.6)
-Total #params:  214144
+Encoder #params:    50304 (%23.4)
+AR #params:         99072 (%46.1)
+W #params:          65536 (%30.5)
+Total #params:  214912
 
-Starting training...
-Epoch: 0001 | Mean training loss: 252.6426 | Mean validation loss: 228.3923 (lowest: 228.3923) | training acc: 19.7304% | validation acc : 5.2083% | Duration: 11.2973 seconds
-Epoch: 0002 | Mean training loss: 198.9529 | Mean validation loss: 154.2001 (lowest: 154.2001) | training acc: 31.1275% | validation acc : 16.6667% | Duration:  9.1451 seconds
-Epoch: 0003 | Mean training loss: 131.1253 | Mean validation loss: 105.2641 (lowest: 105.2641) | training acc: 44.3627% | validation acc : 22.9167% | Duration:  9.0709 seconds
-Epoch: 0004 | Mean training loss: 84.6535 | Mean validation loss: 63.7406 (lowest: 63.7406) | training acc: 55.1471% | validation acc : 31.2500% | Duration:  8.9858 seconds
-Epoch: 0005 | Mean training loss: 55.5657 | Mean validation loss: 40.9016 (lowest: 40.9016) | training acc: 61.2745% | validation acc : 40.6250% | Duration:  9.1805 seconds
-Epoch: 0006 | Mean training loss: 40.8553 | Mean validation loss: 30.4655 (lowest: 30.4655) | training acc: 63.8480% | validation acc : 43.7500% | Duration:  8.9938 seconds
+
+
+Starting testing... 
+Epoch 1: Train Accuracy: 2.33%, Test Accuracy: 1.04%
+Epoch 2: Train Accuracy: 2.33%, Test Accuracy: 1.04%
+Epoch 3: Train Accuracy: 2.57%, Test Accuracy: 1.04%
+Epoch 4: Train Accuracy: 2.82%, Test Accuracy: 1.04%
+Epoch 5: Train Accuracy: 4.04%, Test Accuracy: 2.08%
+Epoch 6: Train Accuracy: 4.53%, Test Accuracy: 2.08%
+Epoch 7: Train Accuracy: 5.76%, Test Accuracy: 2.08%
+Epoch 8: Train Accuracy: 6.50%, Test Accuracy: 1.04%
+Epoch 9: Train Accuracy: 7.84%, Test Accuracy: 1.04%
+Epoch 10: Train Accuracy: 8.95%, Test Accuracy: 2.08%
+Epoch 11: Train Accuracy: 9.93%, Test Accuracy: 3.12%
+Epoch 12: Train Accuracy: 10.05%, Test Accuracy: 1.04%
+Epoch 13: Train Accuracy: 10.42%, Test Accuracy: 1.04%
+Epoch 14: Train Accuracy: 11.27%, Test Accuracy: 3.12%
+Epoch 15: Train Accuracy: 12.01%, Test Accuracy: 2.08%
+Epoch 16: Train Accuracy: 12.01%, Test Accuracy: 2.08%
+Epoch 17: Train Accuracy: 12.75%, Test Accuracy: 3.12%
+Epoch 18: Train Accuracy: 12.01%, Test Accuracy: 2.08%
+Epoch 19: Train Accuracy: 12.25%, Test Accuracy: 1.04%
+Epoch 20: Train Accuracy: 12.75%, Test Accuracy: 2.08%
+Epoch 21: Train Accuracy: 13.11%, Test Accuracy: 2.08%
+Epoch 22: Train Accuracy: 12.62%, Test Accuracy: 2.08%
+Epoch 23: Train Accuracy: 12.87%, Test Accuracy: 2.08%
+Epoch 24: Train Accuracy: 13.36%, Test Accuracy: 2.08%
+Epoch 25: Train Accuracy: 13.60%, Test Accuracy: 1.04%
+Epoch 26: Train Accuracy: 13.11%, Test Accuracy: 3.12%
+Epoch 27: Train Accuracy: 13.36%, Test Accuracy: 3.12%
+Epoch 28: Train Accuracy: 13.97%, Test Accuracy: 3.12%
+Epoch 29: Train Accuracy: 13.85%, Test Accuracy: 2.08%
+Epoch 30: Train Accuracy: 12.75%, Test Accuracy: 3.12%
+Epoch 31: Train Accuracy: 13.24%, Test Accuracy: 3.12%
+Epoch 32: Train Accuracy: 14.09%, Test Accuracy: 2.08%
+Epoch 33: Train Accuracy: 13.24%, Test Accuracy: 3.12%
+Epoch 34: Train Accuracy: 12.99%, Test Accuracy: 3.12%
+Epoch 35: Train Accuracy: 12.87%, Test Accuracy: 3.12%
+Epoch 36: Train Accuracy: 12.75%, Test Accuracy: 3.12%
+Epoch 37: Train Accuracy: 13.85%, Test Accuracy: 3.12%
+Epoch 38: Train Accuracy: 13.60%, Test Accuracy: 3.12%
+Epoch 39: Train Accuracy: 13.60%, Test Accuracy: 3.12%
+Epoch 40: Train Accuracy: 13.60%, Test Accuracy: 4.17%
+Epoch 41: Train Accuracy: 13.60%, Test Accuracy: 2.08%
+Epoch 42: Train Accuracy: 13.48%, Test Accuracy: 3.12%
+Epoch 43: Train Accuracy: 13.85%, Test Accuracy: 3.12%
+Epoch 44: Train Accuracy: 13.36%, Test Accuracy: 3.12%
+Epoch 45: Train Accuracy: 13.73%, Test Accuracy: 3.12%
+Epoch 46: Train Accuracy: 13.73%, Test Accuracy: 2.08%
+Epoch 47: Train Accuracy: 12.99%, Test Accuracy: 3.12%
+Epoch 48: Train Accuracy: 12.87%, Test Accuracy: 3.12%
+Epoch 49: Train Accuracy: 13.73%, Test Accuracy: 3.12%
+Epoch 50: Train Accuracy: 12.50%, Test Accuracy: 2.08%
+Epoch 51: Train Accuracy: 14.09%, Test Accuracy: 3.12%
+Epoch 52: Train Accuracy: 14.22%, Test Accuracy: 3.12%

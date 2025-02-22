@@ -30,9 +30,9 @@ lr_scheduler_params = {'mode': 'min',
                        'factor': 0.5,
                        'patience': 30}
 encoder_params = {'dropout': dropout, 'normalization_type': 'layernorm'}
-ar_model_params = {'type': 'ldm'}
+ar_model_params = {'type': 'gru'}
 w_params = {'future_predicted_timesteps': future_predicted_timesteps,
-            'detach':False}
+            'detach':True}
 w_use_ldm_params = 1
 encoder_best_model_name = f"kiarash_sandbox/models/CPC_Encoder_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
 ar_best_model_name = f"kiarash_sandbox/models/CPC_AR_best_model_{ar_model_params['type']}_ldmfcst{w_use_ldm_params}.pt"
@@ -54,29 +54,11 @@ name_of_log_textfile = f"kiarash_sandbox/logs/trainlog_{ar_model_params['type']}
 Process on cuda
 
 Number of parameters:
-Encoder #params:    50304 (%30.4)
-AR #params:         49536 (%30.0)
-W #params:          65536 (%39.6)
-Total #params:  165376
+Encoder #params:    50304 (%23.4)
+AR #params:         99072 (%46.1)
+W #params:          65536 (%30.5)
+Total #params:  214912
 
 
 
 Starting testing... 
-Epoch 1: Train Accuracy: 1.35%, Test Accuracy: 1.04%
-Epoch 2: Train Accuracy: 1.47%, Test Accuracy: 0.00%
-Epoch 3: Train Accuracy: 1.59%, Test Accuracy: 0.00%
-Epoch 4: Train Accuracy: 2.57%, Test Accuracy: 0.00%
-Epoch 5: Train Accuracy: 2.08%, Test Accuracy: 0.00%
-Epoch 6: Train Accuracy: 2.70%, Test Accuracy: 0.00%
-Epoch 7: Train Accuracy: 2.57%, Test Accuracy: 0.00%
-Epoch 8: Train Accuracy: 1.84%, Test Accuracy: 0.00%
-Epoch 9: Train Accuracy: 2.45%, Test Accuracy: 0.00%
-Epoch 10: Train Accuracy: 2.21%, Test Accuracy: 0.00%
-Epoch 11: Train Accuracy: 2.45%, Test Accuracy: 0.00%
-Epoch 12: Train Accuracy: 2.33%, Test Accuracy: 0.00%
-Epoch 13: Train Accuracy: 2.08%, Test Accuracy: 0.00%
-Epoch 14: Train Accuracy: 2.08%, Test Accuracy: 0.00%
-Epoch 15: Train Accuracy: 2.94%, Test Accuracy: 0.00%
-Epoch 16: Train Accuracy: 2.33%, Test Accuracy: 0.00%
-Epoch 17: Train Accuracy: 3.31%, Test Accuracy: 0.00%
-Epoch 18: Train Accuracy: 3.19%, Test Accuracy: 0.00%

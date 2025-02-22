@@ -95,7 +95,6 @@ class CPC_encoder(Module):
         # --> with default values torch.Size([8, 512, 128])
         
         return X
-    
 
 
 class CPC_encoder_mlp(Module):
@@ -161,8 +160,6 @@ class CPC_encoder_mlp(Module):
         # X_output is of size [batch_size, linear_3_output_dim, num_frames_encoding]
         
         return X_output
-
-
 
 class CPC_autoregressive_model(Module):
     """
@@ -302,3 +299,12 @@ class CPC_postnet(Module):
         # predicted_future_Z is of size [future_predicted_timesteps, batch_size, num_features]
                 
         return predicted_future_Z
+
+class LogisticRegression(Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.linear_layer = Linear(input_dim, output_dim)
+
+    def forward(self, X):
+        logits = self.linear_layer(X)
+        return logits

@@ -26,7 +26,7 @@ num_frames_encoding = 100
 future_predicted_timesteps = [1, 2, 3, 4]
 
 # Flags for training and testing a CPC model
-train_model = 1
+train_model = 0
 test_model = 1
 rand_init = 0
 
@@ -80,10 +80,10 @@ lr_scheduler_params = {'mode': 'min',
 
 # The hyperparameters for constructing the models. An empty dictionary will make the model to use
 # only default hyperparameters, i.e., the hyperparameters of the original CPC paper
-encoder_params = {'dropout': dropout}
+encoder_params = {'dropout': dropout, 'normalization_type': 'layernorm'}
 ar_model_params = {'type': 'gru'}
 w_params = {'future_predicted_timesteps': future_predicted_timesteps,
-            'detach':False}
+            'detach':True}
 w_use_ldm_params = 0
 
 # The names of the best models (according to validation loss) for loading/saving model weights

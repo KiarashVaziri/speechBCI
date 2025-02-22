@@ -46,7 +46,7 @@ else:
 
 # Import our models
 from torch.utils.data import DataLoader, Subset
-from encoding_models.cpc_model import CPC_encoder_mlp, CPC_autoregressive_model, CPC_postnet
+from encoding_models.cpc_model import CPC_encoder_mlp, CPC_autoregressive_model, CPC_postnet, LogisticRegression
 from cpc_data_loader import CPCDataset
 from pytorch_utils.loss.contrastive_loss import CPCLoss
 
@@ -186,7 +186,6 @@ if __name__ == '__main__':
             f.write('Starting training...\n')
         
         for epoch in range(1, conf.max_epochs + 1):
-            
             start_time = time.time()
     
             # Lists containing the losses of each epoch
@@ -432,7 +431,7 @@ if __name__ == '__main__':
     # Test the model
     if conf.test_model:
         with open(conf.name_of_log_textfile, 'a') as f:
-            f.write('\n\nStarting testing... => ')
+            f.write('\n\nStarting testing... \n')
             
         # Load the best version of the model
         if not conf.rand_init:    
@@ -449,101 +448,112 @@ if __name__ == '__main__':
             Encoder = CPC_encoder_mlp(**conf.encoder_params).to(device)
             AR_model = CPC_autoregressive_model(**conf.ar_model_params).to(device)
             W = CPC_postnet(**conf.w_params).to(device)
-                
-        testing_loss = []
-        Encoder.eval()
-        AR_model.eval()
-        W.eval()
-        with no_grad():
-            if conf.rnn_models_used_in_ar_model:
-                hidden = None
+        
+        # Pass the models to the available device
+        Encoder = Encoder.to(device)
+        AR_model = AR_model.to(device)
+        W = W.to(device)
+
+        # TODO: fix dimensions
+        classifier = LogisticRegression(input_dim=128, output_dim=51)
+        classifier = classifier.to(device)
+        
+        # TODO: fix finetuning
+        if True:
+            Encoder.eval()
+            AR_model.eval()
+            W.eval()
+            # Disable gradient computation for Encoder and AR_model
+            for param in Encoder.parameters():
+                param.requires_grad = False
+            for param in AR_model.parameters():
+                param.requires_grad = False
+
+        # Collect parameters (though now they won’t be trainable)
+        ftx_params = list(Encoder.parameters()) + list(AR_model.parameters())
+
+        clf_params = list(classifier.parameters())
+        ftx_optimizer = torch.optim.SGD(params=ftx_params, lr=1e-4, momentum=0.9, weight_decay=0.01)
+        clf_optimizer = torch.optim.SGD(params=clf_params, lr=2e-3, momentum=0.9, weight_decay=0.1)
+
+        loss_fn = torch.nn.CrossEntropyLoss()
+
+        # TODO: fix the number of max_epochs
+        for epoch in tqdm(range(100), desc='Training the classifier'):
+            train_correct = 0
+            train_total = 0
             
-            # Store the training embeddings
-            Ztrain_embeddings = []
-            Ctrain_embeddings = []
-            train_labels = []
-            
-            log_file = open('kiarash_sandbox/logs/fx_log.txt', "w")
-            for train_data in tqdm(train_data_loader, desc=f"Feature extraction - training set: ", unit="batch", file=log_file):
+            # Encoder.train()
+            # AR_model.train()
+            # classifier.train()
+            for train_data in train_data_loader:
+                # The loss of the batch
                 loss_batch = 0.0
+
+                # Get the batches
                 X_input, batch_labels = train_data
                 X_input = X_input.to(device)
-                Z = Encoder(X_input)    #
+                batch_labels = batch_labels.to(device)
+
+                # Zero the gradient of the optimizer
+                ftx_optimizer.zero_grad()
+                clf_optimizer.zero_grad()
+
+                # Pass our data through the encoder
+                Z = Encoder(X_input)
                 if conf.rnn_models_used_in_ar_model:
                     C, hidden = AR_model(Z, hidden)
                 else:
                     C = AR_model(Z)
-                
-                Ztrain_embeddings.append(Z.mean(axis=2))    #[batch_size, num_features, num_frames_encoding]
-                # Ctrain_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
-                Ctrain_embeddings.append(C[:, -1])          # select the last hidden vector
-                train_labels.append(batch_labels)    
-            
-            Ztrain_embeddings = torch.cat(Ztrain_embeddings).cpu().numpy()
-            Ctrain_embeddings = torch.cat(Ctrain_embeddings).cpu().numpy()
-            train_labels = torch.cat(train_labels).cpu().numpy()
+                logits = classifier(C[:, -1])
 
-            # Store the test embeddings
-            Ztest_embeddings = []
-            Ctest_embeddings = []
-            test_labels = []
-            for test_data in tqdm(test_data_loader, desc=f"Feature extraction - test set: ", unit="batch", file=log_file):
-                loss_batch = 0.0
-                X_input, batch_labels = test_data
-                X_input = X_input.to(device)
-                Z = Encoder(X_input)    #
-                if conf.rnn_models_used_in_ar_model:
-                    C, hidden = AR_model(Z, hidden)
-                else:
-                    C = AR_model(Z)
-                
-                Ztest_embeddings.append(Z.mean(axis=2))  #[batch_size, num_features, num_frames_encoding]
-                # Ctest_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
-                Ctest_embeddings.append(C[:, -1])  #[batch_size, num_frames_encoding, num_features]
-                test_labels.append(batch_labels)    
+                # Compute loss and backpropagate
+                loss_batch = loss_fn(logits, batch_labels)
+                loss_batch.backward()
+                # ftx_optimizer.step()
+                clf_optimizer.step()
 
-                # Compute test loss
-                for t in timesteps:
-                    Z_future_timesteps = Z[:,(t + 1):(t + max_future_timestep + 1),:].permute(1, 0, 2)
-                    c_t = C[:, t, :]
-                    predicted_future_Z = W(c_t)
-                    # if batch_labels != []:
-                    #     loss = loss_function(Z_future_timesteps, predicted_future_Z, batch_labels)
-                    # else:
-                    loss = loss_function(Z_future_timesteps, predicted_future_Z)
-                    loss_batch += loss
-                testing_loss.append(loss_batch.item())
+                # Compute training accuracy
+                predicted_labels = torch.argmax(logits, dim=1)
+                train_correct += (predicted_labels == batch_labels).sum().item()
+                train_total += batch_labels.size(0)
 
-            testing_loss = np.array(testing_loss).mean()
+            # Compute and log training accuracy
+            train_accuracy = 100 * train_correct / train_total
+
+            # Compute test accuracy
+            test_correct = 0
+            test_total = 0
+            Encoder.eval()
+            AR_model.eval()
+            classifier.eval()
+            with torch.no_grad():
+                for test_data in test_data_loader:
+                    # Get batches
+                    X_input, batch_labels = test_data
+                    X_input = X_input.to(device)
+                    batch_labels = batch_labels.to(device)
+
+                    # Forward pass
+                    Z = Encoder(X_input)
+                    if conf.rnn_models_used_in_ar_model:
+                        C, hidden = AR_model(Z, hidden)
+                    else:
+                        C = AR_model(Z)
+                    logits = classifier(C[:, -1])
+
+                    # Compute predictions
+                    predicted_labels = torch.argmax(logits, dim=1)
+                    test_correct += (predicted_labels == batch_labels).sum().item()
+                    test_total += batch_labels.size(0)
+
+            # Compute test accuracy
+            test_accuracy = 100 * test_correct / test_total
+
+            # Log accuracies
             with open(conf.name_of_log_textfile, 'a') as f:
-                f.write(f'Testing loss: {testing_loss:7.4f}\n\n')
-            log_file.close()
-            # Concatenate the embeddings
-            Ztest_embeddings = torch.cat(Ztest_embeddings).cpu().numpy()
-            Ctest_embeddings = torch.cat(Ctest_embeddings).cpu().numpy()
-            test_labels = torch.cat(test_labels).cpu().numpy()
+                f.write(f"Epoch {epoch+1}: Train Accuracy: {train_accuracy:.2f}%, Test Accuracy: {test_accuracy:.2f}%\n")
 
-            # # Classify speakers
-            # clf = LogisticRegression(penalty='l2', solver='lbfgs', max_iter=500)
-            clf = SVC(C=1, kernel='linear')
-            clf.fit(Ctrain_embeddings, train_labels)
-            train_labels_predicted = clf.predict(Ctrain_embeddings)
-            test_labels_predicted = clf.predict(Ctest_embeddings)
-            train_acc = accuracy_score(train_labels, train_labels_predicted)
-            test_acc = accuracy_score(test_labels, test_labels_predicted)    
-            metrics['test_acc'] = test_acc
-            
-            with open(conf.name_of_log_textfile, 'a') as f:
-                f.write(f'Word classification\n')
-                f.write(f'train acc: {100*train_acc:3.4f}% \ntesting acc : {100*test_acc:3.4f}%\n')
-
-            print(f'Word classification')
-            print(f'train acc: {100*train_acc:3.3f}% \ntesting acc : {100*test_acc:3.3f}% \n')
-
-            # fig, ax1, ax2 = visualize_tsne(x= Ctest_embeddings, y_label=test_labels, perplexity=10, title_str=f'speaker classification: {test_acc:.4f}\n')
-            # fig.savefig(f'./figs/tsne visualization - seed[{conf.random_seed}].png')
-
-            # Plot losses (training and validation)
 
     # Define the file path for saving the metrics
     metrics_file = os.path.join('kiarash_sandbox/metrics', f"metrics_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_{conf.future_predicted_timesteps}_{conf.loss_flag}")
