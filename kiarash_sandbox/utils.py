@@ -136,7 +136,7 @@ def prepare_data(type='words'):
     # CrossEntropyLoss requires labels starting from 0
     labels = labels - 1
 
-    X_train, X_test, y_train, y_test = train_test_split(padded_trials_gs, labels, test_size=0.2, shuffle=True, random_state=30)
-    X_validation, X_test, y_validation, y_test = train_test_split(X_test, y_test, test_size=0.5, shuffle=True, random_state=30)
+    X_train, X_test, y_train, y_test = train_test_split(padded_trials_gs, labels, test_size=0.3, stratify=labels, random_state=30)
+    X_validation, X_test, y_validation, y_test = train_test_split(X_test, y_test, test_size=0.5, stratify=y_test, random_state=30)
 
     return X_train, X_validation, X_test, y_train, y_validation, y_test

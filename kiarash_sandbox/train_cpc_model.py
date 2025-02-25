@@ -203,7 +203,7 @@ if __name__ == '__main__':
                 hidden = None
             
             # Open the log file for writing
-            log_file = open(f"kiarash_sandbox/logs/epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_{conf.loss_flag}.txt", "w")
+            log_file = open(f"kiarash_sandbox/logs/epochlog_{conf.ar_model_params['type']}_ldmfcst{conf.w_use_ldm_params}_k{max_future_timestep}_{conf.loss_flag}_h{conf.w_params['encoding_dim']}.txt", "w")
 
             # Store the features/embeddings
             Z_feats_training = []
@@ -358,7 +358,7 @@ if __name__ == '__main__':
             
             # Monitor classification accuracy on validation set
             # Classify speakers
-            clf = LogisticRegression(penalty='l2')
+            clf = LogisticRegression(penalty='l2', solver='lbfgs', max_iter=400, C=1)
             # clf = SVC(C=0.1)
             clf.fit(C_feats_training, train_labels)
             train_labels_predicted = clf.predict(C_feats_training)
@@ -474,9 +474,9 @@ if __name__ == '__main__':
                 else:
                     C = AR_model(Z)
                 
-                Ztrain_embeddings.append(Z.mean(axis=2))    #[batch_size, num_features, num_frames_encoding]
-                # Ctrain_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
-                Ctrain_embeddings.append(C[:, -1])          # select the last hidden vector
+                Ztrain_embeddings.append(Z.mean(axis=1))    #[batch_size, num_features, num_frames_encoding]
+                Ctrain_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                # Ctrain_embeddings.append(C[:, -1])          # select the last hidden vector
                 train_labels.append(batch_labels)    
             
             Ztrain_embeddings = torch.cat(Ztrain_embeddings).cpu().numpy()
@@ -497,9 +497,9 @@ if __name__ == '__main__':
                 else:
                     C = AR_model(Z)
                 
-                Ztest_embeddings.append(Z.mean(axis=2))  #[batch_size, num_features, num_frames_encoding]
-                # Ctest_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
-                Ctest_embeddings.append(C[:, -1])  #[batch_size, num_frames_encoding, num_features]
+                Ztest_embeddings.append(Z.mean(axis=1))  #[batch_size, num_features, num_frames_encoding]
+                Ctest_embeddings.append(C.mean(axis=1))  #[batch_size, num_frames_encoding, num_features]
+                # Ctest_embeddings.append(C[:, -1])  #[batch_size, num_frames_encoding, num_features]
                 test_labels.append(batch_labels)    
 
                 # Compute test loss
